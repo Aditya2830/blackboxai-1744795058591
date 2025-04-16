@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>E-Learning Quiz Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-6">
+    <div class="max-w-4xl mx-auto bg-white p-8 rounded shadow">
+        <h1 class="text-3xl font-bold mb-6 text-center">E-Learning Quiz Generator</h1>
+        <textarea id="contentInput" rows="8" placeholder="Paste your content here..." class="w-full p-4 border rounded mb-4 resize-none"></textarea>
+        <button id="generateBtn" class="bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700 transition">Generate Quiz</button>
+        <div id="quizContainer" class="mt-8"></div>
+    </div>
+
+    <script>
+        const generateBtn = document.getElementById('generateBtn');
+        const contentInput = document.getElementById('contentInput');
+        const quizContainer = document.getElementById('quizContainer');
+
+        generateBtn.addEventListener('click', async () => {
+            const text = contentInput.value.trim();
+            if (!text) {
+                alert('Please enter some content to generate quiz.');
+                return;
+            }
+            quizContainer.innerHTML = '<p class="text-gray-600">Generating quiz...</p>';
+            try {
+                const response = await fetch('http://localhost:8000/api/generate-quiz/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ text })
+                });
+                if (!response.ok) {
+                    throw new Error('Failed to generate quiz');
+                }
+                const data = await response.json();
+                displayQuiz(data.mcqs);
+            } catch (error) {
+                quizContainer.innerHTML = `<p class="text-red-600">Error: ${error.message}</p>`;
+            }
+        });
+
+        function displayQuiz(mcqs) {
+            if (!mcqs || mcqs.length === 0) {
+                quizContainer.innerHTML = '<p class="text-gray-600">No questions generated.</p>';
+                return;
+            }
+            let html = '';
+            mcqs.forEach((mcq, index) => {
+                html += `
+                    <div class="mb-6 p-4 border rounded bg-gray-50">
+                        <h3 class="font-semibold mb-2">Q${index + 1}: ${mcq.question}</h3>
+                        <ul class="list-disc list-inside mb-2">
+                            ${mcq.options.map(option => `<li>${option}</li>`).join('')}
+                        </ul>
+                        <p class="text-green-700 font-semibold">Answer: ${mcq.answer}</p>
+                    </div>
+                `;
+            });
+            quizContainer.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
